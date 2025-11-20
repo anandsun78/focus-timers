@@ -1,0 +1,180 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Tracker,
+  addTracker as addTrackerMutation,
+  deleteTracker as deleteTrackerMutation,
+  relapseTracker as relapseTrackerMutation,
+  resetTracker as resetTrackerMutation,
+  startTracker as startTrackerMutation,
+} from "./trackerModel";
+import {
+  NetlifyTrackerRepository,
+  TrackerRepository,
+} from "./trackerRepository";
+import { safeStorage } from "../lib/safeStorage";
+
+const SELECTED_KEY_STORAGE = "days_selected_key";
+
+type SyncStatus = "idle" | "saving" | "error";
+
+export interface TrackerBoardState {
+  trackers: Tracker[];
+  loading: boolean;
+  loadError?: string;
+  syncError?: string;
+  syncStatus: SyncStatus;
+  selectedKey: string;
+}
+
+export interface TrackerBoardActions {
+  addTracker(label: string): Promise<void>;
+  startTracker(key: string): Promise<void>;
+  relapseTracker(key: string): Promise<void>;
+  resetTracker(key: string): Promise<void>;
+  deleteTracker(key: string): Promise<void>;
+  selectTitle(key: string): void;
+}
+
+export const useTrackerBoard = (
+  repository?: TrackerRepository
+): { state: TrackerBoardState; actions: TrackerBoardActions } => {
+  const repo = useMemo(
+    () => repository ?? new NetlifyTrackerRepository(),
+    [repository]
+  );
+
+  const [state, setState] = useState<TrackerBoardState>(() => ({
+    trackers: [],
+    loading: true,
+    syncStatus: "idle",
+    selectedKey: safeStorage.get(SELECTED_KEY_STORAGE) ?? "",
+    loadError: undefined,
+    syncError: undefined,
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    repo
+      .load()
+      .then((trackers) => {
+        if (cancelled) return;
+        setState((prev) => ({
+          ...prev,
+          trackers,
+          loading: false,
+          loadError: undefined,
+        }));
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message =
+          error instanceof Error ? error.message : "Unable to load trackers";
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          loadError: message,
+        }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [repo]);
+
+  useEffect(() => {
+    safeStorage.set(SELECTED_KEY_STORAGE, state.selectedKey);
+  }, [state.selectedKey]);
+
+  const persistTrackers = useCallback(
+    async (trackers: Tracker[]) => {
+      setState((prev) => ({ ...prev, syncStatus: "saving" }));
+      try {
+        await repo.save(trackers);
+        setState((prev) => ({
+          ...prev,
+          syncStatus: "idle",
+          syncError: undefined,
+        }));
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to save trackers";
+        setState((prev) => ({
+          ...prev,
+          syncStatus: "error",
+          syncError: message,
+        }));
+      }
+    },
+    [repo]
+  );
+
+  const updateTrackers = useCallback(
+    (mutator: (trackers: Tracker[]) => Tracker[]) => {
+      let next: Tracker[] = [];
+      setState((prev) => {
+        next = mutator(prev.trackers);
+        return { ...prev, trackers: next };
+      });
+      return persistTrackers(next);
+    },
+    [persistTrackers]
+  );
+
+  const addTracker = useCallback(
+    async (label: string) => {
+      const trimmed = label.trim();
+      if (!trimmed) {
+        return;
+      }
+      await updateTrackers((trackers) =>
+        addTrackerMutation(trackers, trimmed)
+      );
+    },
+    [updateTrackers]
+  );
+
+  const startTracker = useCallback(
+    (key: string) => updateTrackers((trackers) => startTrackerMutation(trackers, key)),
+    [updateTrackers]
+  );
+
+  const relapseTracker = useCallback(
+    (key: string) => updateTrackers((trackers) => relapseTrackerMutation(trackers, key)),
+    [updateTrackers]
+  );
+
+  const resetTracker = useCallback(
+    (key: string) => updateTrackers((trackers) => resetTrackerMutation(trackers, key)),
+    [updateTrackers]
+  );
+
+  const deleteTracker = useCallback(
+    async (key: string) => {
+      await updateTrackers((trackers) => deleteTrackerMutation(trackers, key));
+      setState((prev) => ({
+        ...prev,
+        selectedKey: prev.selectedKey === key ? "" : prev.selectedKey,
+      }));
+    },
+    [updateTrackers]
+  );
+
+  const selectTitle = useCallback((key: string) => {
+    setState((prev) => ({ ...prev, selectedKey: key }));
+  }, []);
+
+  const actions = useMemo<TrackerBoardActions>(
+    () => ({
+      addTracker,
+      startTracker,
+      relapseTracker,
+      resetTracker,
+      deleteTracker,
+      selectTitle,
+    }),
+    [addTracker, startTracker, relapseTracker, resetTracker, deleteTracker, selectTitle]
+  );
+
+  return { state, actions };
+};
