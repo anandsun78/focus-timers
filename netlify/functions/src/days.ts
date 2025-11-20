@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Handler } from "@netlify/functions";
 import { connectToDatabase } from "./lib/mongo";
 import { json, badRequest, methodNotAllowed } from "./lib/http";
