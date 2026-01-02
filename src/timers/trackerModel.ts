@@ -11,6 +11,7 @@ export interface TrackerDTO extends Omit<Tracker, "startTime"> {
 }
 
 export interface DurationParts {
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
@@ -34,12 +35,20 @@ export interface HeaderSummary {
   usesSelectedTracker: boolean;
 }
 
-export const GOAL_DURATION_DAYS = 60;
+const DEFAULT_GOAL_DURATION_DAYS = 60;
+const goalDaysEnv = Number(
+  process.env.REACT_APP_SESSION_DAYS ?? process.env.APP_SESSION_DAYS
+);
+export const GOAL_DURATION_DAYS =
+  Number.isFinite(goalDaysEnv) && goalDaysEnv > 0
+    ? goalDaysEnv
+    : DEFAULT_GOAL_DURATION_DAYS;
 export const GOAL_DURATION_MS = GOAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
 
 const MS_IN_SECOND = 1000;
 const SECONDS_IN_MINUTE = 60;
 const MINUTES_IN_HOUR = 60;
+const HOURS_IN_DAY = 24;
 
 const slugify = (label: string): string =>
   label
@@ -60,14 +69,16 @@ const uniqueKey = (base: string, existing: Set<string>): string => {
 };
 
 const toDurationParts = (totalSeconds: number): DurationParts => {
+  const secondsPerDay = HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE;
+  const days = Math.floor(totalSeconds / secondsPerDay);
   const hours = Math.floor(
-    totalSeconds / (SECONDS_IN_MINUTE * MINUTES_IN_HOUR)
+    (totalSeconds % secondsPerDay) / (SECONDS_IN_MINUTE * MINUTES_IN_HOUR)
   );
   const minutes = Math.floor(
     (totalSeconds % (SECONDS_IN_MINUTE * MINUTES_IN_HOUR)) / SECONDS_IN_MINUTE
   );
   const seconds = totalSeconds % SECONDS_IN_MINUTE;
-  return { hours, minutes, seconds };
+  return { days, hours, minutes, seconds };
 };
 
 export const trackerFromDto = (dto: TrackerDTO): Tracker => ({
@@ -151,7 +162,7 @@ export const computeElapsedParts = (
   now = new Date()
 ): DurationParts => {
   if (!startTime) {
-    return { hours: 0, minutes: 0, seconds: 0 };
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
   const diffMs = now.getTime() - startTime.getTime();
   const diffSeconds = Math.max(0, Math.floor(diffMs / MS_IN_SECOND));
@@ -174,7 +185,7 @@ export const computeAverageRelapseDuration = (
   tracker: Tracker
 ): DurationParts => {
   if (!tracker.totalRelapses) {
-    return { hours: 0, minutes: 0, seconds: 0 };
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
   const avgSeconds = Math.floor(
     tracker.totalElapsedSeconds / tracker.totalRelapses

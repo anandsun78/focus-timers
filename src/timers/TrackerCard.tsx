@@ -56,14 +56,14 @@ export const TrackerCard = ({
       <div className="meta">
         <span className="chip">
           {isRunning
-            ? `${TRACKER_TEXT.currentPrefix} ${elapsed.hours}h ${elapsed.minutes}m ${elapsed.seconds}s`
+            ? `${TRACKER_TEXT.currentPrefix} ${elapsed.days}d ${elapsed.hours}h ${elapsed.minutes}m ${elapsed.seconds}s`
             : TRACKER_TEXT.notStarted}
         </span>
         <span className="chip">
           {TRACKER_TEXT.relapsesLabel} {tracker.totalRelapses}
         </span>
         <span className="chip">
-          {TRACKER_TEXT.avgBeforeRelapseLabel} {average.hours}h{" "}
+          {TRACKER_TEXT.avgBeforeRelapseLabel} {average.days}d {average.hours}h{" "}
           {average.minutes}m{" "}
           {average.seconds}s
         </span>
