@@ -1,17 +1,12 @@
 # Focus Timers
 
-A lightweight React app for tracking streaks and relapses, backed by Netlify
-Functions and MongoDB.
-
-## Features
-- Multi-tracker dashboard with progress and relapse stats
-- Auth gate backed by Netlify Functions
-- MongoDB persistence for trackers
+React based application dashboard with count down timers for focusing. Tracking last time used 
+social media etc.
 
 ## Tech Stack
-- React + TypeScript (Create React App)
-- Netlify Functions (TypeScript build output)
-- MongoDB via Mongoose
+- React 18 + TypeScript, React Router 6
+- Netlify Functions (TypeScript) + MongoDB via mongoose
+- Auth gate backed by Netlify Functions
 
 ## Getting Started
 ```bash
@@ -22,17 +17,17 @@ netlify dev
 
 The app runs on `http://localhost:4050` by default.
 
-## Environment Variables
+## Required ENV Vars/Setup:
+Require a mongodb atlas account. Can get a free account from https://account.mongodb.com/
+Require a nelify account (optional) for deployment.
+
 Create a `.env` file in the project root:
 ```bash
-APP_PASSWORD=your-password
-APP_SESSION_SECRET=your-secret
-APP_SESSION_DAYS=30
-MONGODB_URI=mongodb+srv://...
+APP_PASSWORD - password to access the site (for ex 4499)
+APP_SESSION_SECRET - used along side the password can use any hash value here.
+APP_SESSION_DAYS - (optional) how many days the streak should be tracked by default it is 30 days
+MONGODB_URI - the mongodb atlas uri ex: mongodb+srv://your_uri
 ```
 
-## Scripts
-- `npm run start` - Starts CRA on port 4050
-- `npm run build:functions` - Builds Netlify Functions to `netlify/functions/dist`
-- `npm run build` - Builds app + functions
-- `netlify dev` - Runs the app and functions locally
+## Deployment
+Netlify-ready via `netlify.toml`. Functions are bundled from `netlify/functions` with `esbuild` and proxied under `/api/*`.
