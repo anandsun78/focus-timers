@@ -17,8 +17,11 @@ export const TrackerDashboard = () => {
   const now = useTicker();
 
   const summaries = useMemo(
-    () => state.trackers.map((tracker) => buildTrackerSummary(tracker, now)),
-    [state.trackers, now]
+    () =>
+      state.trackers.map((tracker) =>
+        buildTrackerSummary(tracker, state.goalDays, now)
+      ),
+    [state.trackers, state.goalDays, now]
   );
 
   const header = useMemo(
@@ -128,6 +131,7 @@ export const TrackerDashboard = () => {
               <TrackerCard
                 key={summary.tracker.key}
                 summary={summary}
+                goalDays={state.goalDays}
                 isSelected={state.selectedKey === summary.tracker.key}
                 onSelectTitle={() => actions.selectTitle(summary.tracker.key)}
                 onStart={() => {

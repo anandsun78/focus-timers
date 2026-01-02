@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  DEFAULT_GOAL_DURATION_DAYS,
   Tracker,
   addTracker as addTrackerMutation,
   deleteTracker as deleteTrackerMutation,
@@ -23,6 +24,7 @@ export interface TrackerBoardState {
   syncError?: string;
   syncStatus: SyncStatus;
   selectedKey: string;
+  goalDays: number;
 }
 
 export interface TrackerBoardActions {
@@ -47,6 +49,7 @@ export const useTrackerBoard = (
     loading: true,
     syncStatus: SYNC_STATUS.idle,
     selectedKey: safeStorage.get(STORAGE_KEYS.selectedTracker) ?? "",
+    goalDays: DEFAULT_GOAL_DURATION_DAYS,
     loadError: undefined,
     syncError: undefined,
   }));
@@ -56,12 +59,13 @@ export const useTrackerBoard = (
 
     repo
       .load()
-      .then((trackers) => {
+      .then(({ trackers, goalDays }) => {
         if (cancelled) return;
         setState((prev) => ({
           ...prev,
           trackers,
           loading: false,
+          goalDays,
           loadError: undefined,
         }));
       })
@@ -110,14 +114,11 @@ export const useTrackerBoard = (
 
   const updateTrackers = useCallback(
     (mutator: (trackers: Tracker[]) => Tracker[]) => {
-      let next: Tracker[] = [];
-      setState((prev) => {
-        next = mutator(prev.trackers);
-        return { ...prev, trackers: next };
-      });
+      const next = mutator(state.trackers);
+      setState((prev) => ({ ...prev, trackers: next }));
       return persistTrackers(next);
     },
-    [persistTrackers]
+    [persistTrackers, state.trackers]
   );
 
   const addTracker = useCallback(

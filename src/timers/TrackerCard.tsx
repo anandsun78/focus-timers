@@ -1,8 +1,9 @@
 import { TRACKER_TEXT } from "../constants";
-import { GOAL_DURATION_DAYS, TrackerSummary } from "./trackerModel";
+import { TrackerSummary } from "./trackerModel";
 
 interface TrackerCardProps {
   summary: TrackerSummary;
+  goalDays: number;
   isSelected: boolean;
   onSelectTitle(): void;
   onStart(): void;
@@ -13,6 +14,7 @@ interface TrackerCardProps {
 
 export const TrackerCard = ({
   summary,
+  goalDays,
   isSelected,
   onSelectTitle,
   onStart,
@@ -83,7 +85,7 @@ export const TrackerCard = ({
       <div className="progress-wrap">
         <div className="progress-label">
           <span>
-            {metrics.progress.toFixed(2)}% to {GOAL_DURATION_DAYS}{" "}
+            {metrics.progress.toFixed(2)}% to {goalDays}{" "}
             {TRACKER_TEXT.progressToDays}
           </span>
           <span>

@@ -4,10 +4,20 @@ import {
   ERROR_TEXT,
   HTTP_METHODS,
 } from "../constants";
-import { Tracker, trackerFromDto, trackerToDto } from "./trackerModel";
+import {
+  DEFAULT_GOAL_DURATION_DAYS,
+  Tracker,
+  trackerFromDto,
+  trackerToDto,
+} from "./trackerModel";
+
+export interface TrackerLoadResponse {
+  trackers: Tracker[];
+  goalDays: number;
+}
 
 export interface TrackerRepository {
-  load(): Promise<Tracker[]>;
+  load(): Promise<TrackerLoadResponse>;
   save(trackers: Tracker[]): Promise<void>;
 }
 
@@ -20,14 +30,18 @@ const parseJson = async (response: Response) => {
 };
 
 export class NetlifyTrackerRepository implements TrackerRepository {
-  async load(): Promise<Tracker[]> {
+  async load(): Promise<TrackerLoadResponse> {
     const response = await fetch(API_ENDPOINTS.days);
     if (!response.ok) {
       throw new Error(ERROR_TEXT.loadTrackers);
     }
     const payload = await parseJson(response);
     const trackers = Array.isArray(payload.trackers) ? payload.trackers : [];
-    return trackers.map(trackerFromDto);
+    const goalDays =
+      typeof payload.goalDays === "number" && payload.goalDays > 0
+        ? payload.goalDays
+        : DEFAULT_GOAL_DURATION_DAYS;
+    return { trackers: trackers.map(trackerFromDto), goalDays };
   }
 
   async save(trackers: Tracker[]): Promise<void> {

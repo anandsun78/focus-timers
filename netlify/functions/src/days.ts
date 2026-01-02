@@ -9,7 +9,15 @@ import {
   SINGLETON_ID,
   TRACKER_KEY_PREFIX,
   TRACKER_LABEL_FALLBACK,
+  ENV_KEYS,
+  SESSION_DEFAULT_DAYS,
 } from "./constants";
+import { readNumericEnv } from "./lib/env";
+
+const parseGoalDays = (): number => {
+  const value = readNumericEnv(ENV_KEYS.appSessionDays, SESSION_DEFAULT_DAYS);
+  return value > 0 ? value : SESSION_DEFAULT_DAYS;
+};
 
 const parseJsonBody = (body: string | null): Record<string, unknown> => {
   if (!body) {
@@ -75,11 +83,15 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod === HTTP_METHODS.get) {
+    const goalDays = parseGoalDays();
     const doc = await DaysDocModel.findOne({ id: SINGLETON_ID })
       .lean<DaysDocRecord>()
       .exec();
     const trackers = doc?.trackers ?? [];
-    return json(200, { trackers: trackers.map(serializeTracker) });
+    return json(200, {
+      goalDays,
+      trackers: trackers.map(serializeTracker),
+    });
   }
 
   if (event.httpMethod === HTTP_METHODS.post) {
@@ -88,13 +100,14 @@ export const handler: Handler = async (event) => {
       const trackers = sanitizeTrackers(payload.trackers);
       const updated = await DaysDocModel.findOneAndUpdate(
         { id: SINGLETON_ID },
-        { $set: { trackers } },
+        { $set: { trackers }, $setOnInsert: { id: SINGLETON_ID } },
         { upsert: true, new: true }
       )
         .lean<DaysDocRecord>()
         .exec();
       return json(200, {
         ok: true,
+        goalDays: parseGoalDays(),
         trackers: (updated?.trackers ?? []).map(serializeTracker),
       });
     } catch (error) {

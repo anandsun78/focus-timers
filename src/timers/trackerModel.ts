@@ -35,15 +35,7 @@ export interface HeaderSummary {
   usesSelectedTracker: boolean;
 }
 
-const DEFAULT_GOAL_DURATION_DAYS = 60;
-const goalDaysEnv = Number(
-  process.env.REACT_APP_SESSION_DAYS ?? process.env.APP_SESSION_DAYS
-);
-export const GOAL_DURATION_DAYS =
-  Number.isFinite(goalDaysEnv) && goalDaysEnv > 0
-    ? goalDaysEnv
-    : DEFAULT_GOAL_DURATION_DAYS;
-export const GOAL_DURATION_MS = GOAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
+export const DEFAULT_GOAL_DURATION_DAYS = 60;
 
 const MS_IN_SECOND = 1000;
 const SECONDS_IN_MINUTE = 60;
@@ -171,13 +163,15 @@ export const computeElapsedParts = (
 
 export const computeProgress = (
   startTime: Date | null,
+  goalDays: number,
   now = new Date()
 ): number => {
   if (!startTime) {
     return 0;
   }
+  const goalMs = goalDays * 24 * 60 * 60 * 1000;
   const diffMs = now.getTime() - startTime.getTime();
-  const pct = (diffMs / GOAL_DURATION_MS) * 100;
+  const pct = (diffMs / goalMs) * 100;
   return Math.max(0, Math.min(100, Number(pct.toFixed(4))));
 };
 
@@ -195,9 +189,10 @@ export const computeAverageRelapseDuration = (
 
 export const buildTrackerSummary = (
   tracker: Tracker,
+  goalDays: number,
   now = new Date()
 ): TrackerSummary => {
-  const progress = computeProgress(tracker.startTime, now);
+  const progress = computeProgress(tracker.startTime, goalDays, now);
   const elapsed = computeElapsedParts(tracker.startTime, now);
   const averageBeforeRelapse = computeAverageRelapseDuration(tracker);
 
