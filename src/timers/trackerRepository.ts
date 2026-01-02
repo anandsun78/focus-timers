@@ -1,3 +1,9 @@
+import {
+  API_ENDPOINTS,
+  CONTENT_TYPE,
+  ERROR_TEXT,
+  HTTP_METHODS,
+} from "../constants";
 import { Tracker, trackerFromDto, trackerToDto } from "./trackerModel";
 
 export interface TrackerRepository {
@@ -15,9 +21,9 @@ const parseJson = async (response: Response) => {
 
 export class NetlifyTrackerRepository implements TrackerRepository {
   async load(): Promise<Tracker[]> {
-    const response = await fetch("/.netlify/functions/days");
+    const response = await fetch(API_ENDPOINTS.days);
     if (!response.ok) {
-      throw new Error("Unable to load trackers");
+      throw new Error(ERROR_TEXT.loadTrackers);
     }
     const payload = await parseJson(response);
     const trackers = Array.isArray(payload.trackers) ? payload.trackers : [];
@@ -25,16 +31,16 @@ export class NetlifyTrackerRepository implements TrackerRepository {
   }
 
   async save(trackers: Tracker[]): Promise<void> {
-    const response = await fetch("/.netlify/functions/days", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch(API_ENDPOINTS.days, {
+      method: HTTP_METHODS.post,
+      headers: { "Content-Type": CONTENT_TYPE.json },
       body: JSON.stringify({
         trackers: trackers.map(trackerToDto),
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Unable to persist trackers");
+      throw new Error(ERROR_TEXT.saveTrackers);
     }
   }
 }

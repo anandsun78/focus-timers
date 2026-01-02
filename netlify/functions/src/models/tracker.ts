@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Schema, model } from "mongoose";
+import { MODEL_NAMES, SINGLETON_ID } from "../constants";
 
 export interface TrackerRecord {
   key: string;
@@ -26,16 +27,16 @@ const TrackerSchema = new Schema(
 );
 
 const DaysDocSchema = new Schema({
-  id: { type: String, unique: true, default: "singleton" },
+  id: { type: String, unique: true, default: SINGLETON_ID },
   trackers: { type: [TrackerSchema], default: [] },
 });
 
 let DaysDocModel;
 
 try {
-  DaysDocModel = model("DaysDoc", DaysDocSchema);
+  DaysDocModel = model(MODEL_NAMES.daysDoc, DaysDocSchema);
 } catch {
-  DaysDocModel = model("DaysDoc");
+  DaysDocModel = model(MODEL_NAMES.daysDoc);
 }
 
 export { DaysDocModel };

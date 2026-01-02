@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AuthClient, NetlifyAuthClient } from "./authClient";
+import { AUTH_TEXT, ERROR_TEXT } from "./constants";
 
 interface AuthGateProps {
   children: ReactNode;
@@ -45,7 +46,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
     setLoggingIn(false);
 
     if (!result.ok) {
-      setError(result.error || "Invalid password");
+      setError(result.error || ERROR_TEXT.invalidPassword);
       return;
     }
 
@@ -65,7 +66,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
           padding: 16,
         }}
       >
-        <div>Checking access…</div>
+        <div>{AUTH_TEXT.checkingAccess}</div>
       </div>
     );
   }
@@ -92,7 +93,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
             maxWidth: 360,
           }}
         >
-          <h2
+            <h2
             style={{
               marginBottom: 12,
               fontSize: 20,
@@ -100,7 +101,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
               textAlign: "center",
             }}
           >
-            Enter Password
+            {AUTH_TEXT.enterPassword}
           </h2>
           <p
             style={{
@@ -110,7 +111,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
               textAlign: "center",
             }}
           >
-            This page is private.
+            {AUTH_TEXT.privatePage}
           </p>
 
           <form
@@ -121,7 +122,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
+              placeholder={AUTH_TEXT.passwordPlaceholder}
               style={{
                 padding: "10px 12px",
                 borderRadius: 10,
@@ -146,7 +147,7 @@ export const AuthGate = ({ children, client }: AuthGateProps) => {
                 fontWeight: 500,
               }}
             >
-              {loggingIn ? "Checking…" : "Unlock"}
+              {loggingIn ? AUTH_TEXT.checking : AUTH_TEXT.unlock}
             </button>
           </form>
         </div>

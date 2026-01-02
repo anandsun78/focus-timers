@@ -1,4 +1,5 @@
 import type { HandlerResponse } from "@netlify/functions";
+import { CONTENT_TYPE_JSON, ERROR_TEXT } from "../constants";
 
 export const json = (
   statusCode: number,
@@ -6,7 +7,7 @@ export const json = (
 ): HandlerResponse => ({
   statusCode,
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": CONTENT_TYPE_JSON,
   },
   body: JSON.stringify(payload ?? null),
 });
@@ -18,4 +19,4 @@ export const badRequest = (message: string) =>
   json(400, { ok: false, error: message });
 
 export const methodNotAllowed = () =>
-  json(405, { ok: false, error: "Method Not Allowed" });
+  json(405, { ok: false, error: ERROR_TEXT.methodNotAllowed });

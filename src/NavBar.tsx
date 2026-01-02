@@ -1,22 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { safeStorage } from "./lib/safeStorage";
+import {
+  APP_TITLE,
+  DATA_ATTRIBUTES,
+  MEDIA_QUERIES,
+  NAV_TEXT,
+  ROUTES,
+  STORAGE_KEYS,
+  THEME,
+} from "./constants";
 
-type ThemePreference = "light" | "dark";
-
-const THEME_KEY = "timers_theme";
+type ThemePreference = (typeof THEME)[keyof typeof THEME];
 
 const getInitialTheme = (): ThemePreference => {
-  const stored = safeStorage.get(THEME_KEY);
-  if (stored === "light" || stored === "dark") {
+  const stored = safeStorage.get(STORAGE_KEYS.theme);
+  if (stored === THEME.light || stored === THEME.dark) {
     return stored;
   }
   if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: light)").matches
-      ? "light"
-      : "dark";
+    return window.matchMedia(MEDIA_QUERIES.prefersLight).matches
+      ? THEME.light
+      : THEME.dark;
   }
-  return "dark";
+  return THEME.dark;
 };
 
 export const NavBar = () => {
@@ -24,12 +31,12 @@ export const NavBar = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "light") {
-      root.setAttribute("data-theme", "light");
+    if (theme === THEME.light) {
+      root.setAttribute(DATA_ATTRIBUTES.theme, THEME.light);
     } else {
-      root.removeAttribute("data-theme");
+      root.removeAttribute(DATA_ATTRIBUTES.theme);
     }
-    safeStorage.set(THEME_KEY, theme);
+    safeStorage.set(STORAGE_KEYS.theme, theme);
   }, [theme]);
 
   return (
@@ -39,18 +46,21 @@ export const NavBar = () => {
           <span className="brand-badge" aria-hidden="true">
             ⏱
           </span>
-          <Link to="/days" style={{ color: "inherit", textDecoration: "none" }}>
-            Timers
+          <Link
+            to={ROUTES.days}
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            {APP_TITLE}
           </Link>
         </div>
         <div className="nav-actions">
-          <label title="Toggle light/dark">
+          <label title={NAV_TEXT.toggleTheme}>
             <input
               type="checkbox"
               className="toggle"
-              checked={theme !== "light"}
+              checked={theme !== THEME.light}
               onChange={(event) =>
-                setTheme(event.target.checked ? "dark" : "light")
+                setTheme(event.target.checked ? THEME.dark : THEME.light)
               }
             />
           </label>

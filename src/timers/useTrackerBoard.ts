@@ -12,10 +12,9 @@ import {
   TrackerRepository,
 } from "./trackerRepository";
 import { safeStorage } from "../lib/safeStorage";
+import { ERROR_TEXT, STORAGE_KEYS, SYNC_STATUS } from "../constants";
 
-const SELECTED_KEY_STORAGE = "days_selected_key";
-
-type SyncStatus = "idle" | "saving" | "error";
+type SyncStatus = (typeof SYNC_STATUS)[keyof typeof SYNC_STATUS];
 
 export interface TrackerBoardState {
   trackers: Tracker[];
@@ -46,8 +45,8 @@ export const useTrackerBoard = (
   const [state, setState] = useState<TrackerBoardState>(() => ({
     trackers: [],
     loading: true,
-    syncStatus: "idle",
-    selectedKey: safeStorage.get(SELECTED_KEY_STORAGE) ?? "",
+    syncStatus: SYNC_STATUS.idle,
+    selectedKey: safeStorage.get(STORAGE_KEYS.selectedTracker) ?? "",
     loadError: undefined,
     syncError: undefined,
   }));
@@ -69,7 +68,7 @@ export const useTrackerBoard = (
       .catch((error: unknown) => {
         if (cancelled) return;
         const message =
-          error instanceof Error ? error.message : "Unable to load trackers";
+          error instanceof Error ? error.message : ERROR_TEXT.loadTrackers;
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -83,25 +82,25 @@ export const useTrackerBoard = (
   }, [repo]);
 
   useEffect(() => {
-    safeStorage.set(SELECTED_KEY_STORAGE, state.selectedKey);
+    safeStorage.set(STORAGE_KEYS.selectedTracker, state.selectedKey);
   }, [state.selectedKey]);
 
   const persistTrackers = useCallback(
     async (trackers: Tracker[]) => {
-      setState((prev) => ({ ...prev, syncStatus: "saving" }));
+      setState((prev) => ({ ...prev, syncStatus: SYNC_STATUS.saving }));
       try {
         await repo.save(trackers);
         setState((prev) => ({
           ...prev,
-          syncStatus: "idle",
+          syncStatus: SYNC_STATUS.idle,
           syncError: undefined,
         }));
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unable to save trackers";
+          error instanceof Error ? error.message : ERROR_TEXT.saveTrackers;
         setState((prev) => ({
           ...prev,
-          syncStatus: "error",
+          syncStatus: SYNC_STATUS.error,
           syncError: message,
         }));
       }

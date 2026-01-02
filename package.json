@@ -11,7 +11,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
@@ -24,7 +24,8 @@
     "typescript": "^4.9.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "prestart": "npm run build:functions",
+    "start": "PORT=4050 react-scripts start",
     "build": "npm run build:app && npm run build:functions",
     "build:app": "react-scripts build",
     "build:functions": "tsc -p tsconfig.functions.json",

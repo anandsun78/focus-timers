@@ -1,3 +1,4 @@
+import { TRACKER_TEXT } from "../constants";
 import { GOAL_DURATION_DAYS, TrackerSummary } from "./trackerModel";
 
 interface TrackerCardProps {
@@ -37,7 +38,7 @@ export const TrackerCard = ({
                 color: "#f59e0b",
               }}
             >
-              ★ title tracker
+              {TRACKER_TEXT.titleSuffix}
             </span>
           )}
         </h2>
@@ -45,7 +46,7 @@ export const TrackerCard = ({
         <button
           className="icon-btn"
           type="button"
-          title={`Delete ${tracker.label}`}
+          title={`${TRACKER_TEXT.deletePrefix} ${tracker.label}`}
           onClick={onDelete}
         >
           ✕
@@ -55,12 +56,15 @@ export const TrackerCard = ({
       <div className="meta">
         <span className="chip">
           {isRunning
-            ? `Current: ${elapsed.hours}h ${elapsed.minutes}m ${elapsed.seconds}s`
-            : "Not started"}
+            ? `${TRACKER_TEXT.currentPrefix} ${elapsed.hours}h ${elapsed.minutes}m ${elapsed.seconds}s`
+            : TRACKER_TEXT.notStarted}
         </span>
-        <span className="chip">Relapses: {tracker.totalRelapses}</span>
         <span className="chip">
-          Avg before relapse: {average.hours}h {average.minutes}m{" "}
+          {TRACKER_TEXT.relapsesLabel} {tracker.totalRelapses}
+        </span>
+        <span className="chip">
+          {TRACKER_TEXT.avgBeforeRelapseLabel} {average.hours}h{" "}
+          {average.minutes}m{" "}
           {average.seconds}s
         </span>
         <button
@@ -72,14 +76,20 @@ export const TrackerCard = ({
           }}
           onClick={onSelectTitle}
         >
-          {isSelected ? "★ Title tracker" : "Set as title ★"}
+          {isSelected ? TRACKER_TEXT.titleTracker : TRACKER_TEXT.setTitle}
         </button>
       </div>
 
       <div className="progress-wrap">
         <div className="progress-label">
-          <span>{metrics.progress.toFixed(2)}% to {GOAL_DURATION_DAYS} days</span>
-          <span>{metrics.remainingPercent.toFixed(2)}% left</span>
+          <span>
+            {metrics.progress.toFixed(2)}% to {GOAL_DURATION_DAYS}{" "}
+            {TRACKER_TEXT.progressToDays}
+          </span>
+          <span>
+            {metrics.remainingPercent.toFixed(2)}%{" "}
+            {TRACKER_TEXT.progressLeftSuffix}
+          </span>
         </div>
         <progress className="progress" value={metrics.progress} max={100} />
       </div>
@@ -88,19 +98,19 @@ export const TrackerCard = ({
         {isRunning ? (
           <>
             <button className="btn btn-danger" type="button" onClick={onRelapse}>
-              I Relapsed
+              {TRACKER_TEXT.relapsed}
             </button>
             <button className="btn btn-secondary" type="button" onClick={onReset}>
-              Reset
+              {TRACKER_TEXT.reset}
             </button>
           </>
         ) : (
           <>
             <button className="btn btn-ok" type="button" onClick={onStart}>
-              Start
+              {TRACKER_TEXT.start}
             </button>
             <button className="btn btn-secondary" type="button" onClick={onReset}>
-              Reset
+              {TRACKER_TEXT.reset}
             </button>
           </>
         )}

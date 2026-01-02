@@ -4,6 +4,12 @@ import { useTicker } from "../lib/useTicker";
 import { useTrackerBoard } from "./useTrackerBoard";
 import { buildTrackerSummary, deriveHeaderSummary } from "./trackerModel";
 import { TrackerCard } from "./TrackerCard";
+import {
+  APP_TITLE,
+  SYNC_STATUS,
+  TRACKER_TEXT,
+  formatDeleteConfirmation,
+} from "../constants";
 
 export const TrackerDashboard = () => {
   const { state, actions } = useTrackerBoard();
@@ -23,7 +29,7 @@ export const TrackerDashboard = () => {
   useDocumentTitle(
     header && header.progress > 0
       ? `${header.progress.toFixed(2)}% (${header.label})`
-      : "Timers"
+      : APP_TITLE
   );
 
   const shouldShowTitleHint =
@@ -41,7 +47,7 @@ export const TrackerDashboard = () => {
   const handleDelete = async (label: string, key: string) => {
     if (
       typeof window !== "undefined" &&
-      !window.confirm(`Delete "${label}"? This cannot be undone.`)
+      !window.confirm(formatDeleteConfirmation(label))
     ) {
       return;
     }
@@ -53,7 +59,7 @@ export const TrackerDashboard = () => {
       <div className="header">
         <div>
           <h1 className="h1">
-            Timers
+            {APP_TITLE}
             {header && header.progress > 0 ? (
               <>
                 {" "}
@@ -65,7 +71,9 @@ export const TrackerDashboard = () => {
                       marginRight: 6,
                     }}
                   >
-                    {header.usesSelectedTracker ? "★" : "☆"}
+                    {header.usesSelectedTracker
+                      ? TRACKER_TEXT.starFilled
+                      : TRACKER_TEXT.starOutline}
                   </span>
                   <strong>{header.progress.toFixed(2)}%</strong> • {header.label}
                 </span>
@@ -74,16 +82,16 @@ export const TrackerDashboard = () => {
           </h1>
           {shouldShowTitleHint && (
             <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-              No title tracker selected — using best progress by default. Click{" "}
-              <b>Set as title ★</b> on a card to pin one.
+              {TRACKER_TEXT.titleHint} <b>{TRACKER_TEXT.titleHintAction}</b> on
+              a card to pin one.
             </div>
           )}
         </div>
         <div className="status-cluster">
-          {state.syncStatus === "saving" && (
-            <span className="status-pill">Saving…</span>
+          {state.syncStatus === SYNC_STATUS.saving && (
+            <span className="status-pill">{TRACKER_TEXT.saving}</span>
           )}
-          {state.syncStatus === "error" && state.syncError && (
+          {state.syncStatus === SYNC_STATUS.error && state.syncError && (
             <span className="status-pill status-pill--error">
               {state.syncError}
             </span>
@@ -93,7 +101,7 @@ export const TrackerDashboard = () => {
 
       {state.loadError && (
         <div className="error-banner">
-          Unable to load trackers — {state.loadError}
+          {TRACKER_TEXT.loadErrorPrefix} {state.loadError}
         </div>
       )}
 
@@ -102,10 +110,10 @@ export const TrackerDashboard = () => {
           className="input"
           value={newLabel}
           onChange={(event) => setNewLabel(event.target.value)}
-          placeholder="Add tracker (e.g. Social Media, Sugar, Gaming)"
+          placeholder={TRACKER_TEXT.addPlaceholder}
         />
         <button className="btn" type="submit" disabled={!newLabel.trim()}>
-          Add
+          {TRACKER_TEXT.addButton}
         </button>
       </form>
 
@@ -114,7 +122,7 @@ export const TrackerDashboard = () => {
       ) : (
         <div className="trackers-grid">
           {summaries.length === 0 ? (
-            <div className="empty">No trackers yet. Add one above.</div>
+            <div className="empty">{TRACKER_TEXT.emptyState}</div>
           ) : (
             summaries.map((summary) => (
               <TrackerCard

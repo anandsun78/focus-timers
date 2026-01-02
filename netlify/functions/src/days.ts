@@ -3,8 +3,13 @@ import type { Handler } from "@netlify/functions";
 import { connectToDatabase } from "./lib/mongo";
 import { json, badRequest, methodNotAllowed } from "./lib/http";
 import { DaysDocModel, DaysDocRecord, TrackerRecord } from "./models/tracker";
-
-const SINGLETON_ID = "singleton";
+import {
+  ERROR_TEXT,
+  HTTP_METHODS,
+  SINGLETON_ID,
+  TRACKER_KEY_PREFIX,
+  TRACKER_LABEL_FALLBACK,
+} from "./constants";
 
 const parseJsonBody = (body: string | null): Record<string, unknown> => {
   if (!body) {
@@ -13,7 +18,7 @@ const parseJsonBody = (body: string | null): Record<string, unknown> => {
   try {
     return JSON.parse(body);
   } catch {
-    throw new Error("Invalid JSON payload");
+    throw new Error(ERROR_TEXT.invalidJsonPayload);
   }
 };
 
@@ -41,8 +46,8 @@ const toStringOrFallback = (value: unknown, fallback: string): string => {
 const sanitizeTracker = (raw: unknown): TrackerRecord => {
   const data = (raw ?? {}) as Record<string, unknown>;
   return {
-    key: toStringOrFallback(data.key, `tracker-${Date.now()}`),
-    label: toStringOrFallback(data.label, "Untitled Tracker"),
+    key: toStringOrFallback(data.key, `${TRACKER_KEY_PREFIX}-${Date.now()}`),
+    label: toStringOrFallback(data.label, TRACKER_LABEL_FALLBACK),
     startTime: toDateOrNull(data.startTime),
     totalRelapses: toNumberOrZero(data.totalRelapses),
     totalElapsedSeconds: toNumberOrZero(data.totalElapsedSeconds),
@@ -66,10 +71,10 @@ export const handler: Handler = async (event) => {
     await connectToDatabase();
   } catch (error) {
     console.error("Failed to connect to Mongo", error);
-    return json(500, { ok: false, error: "Database connection error" });
+    return json(500, { ok: false, error: ERROR_TEXT.databaseConnection });
   }
 
-  if (event.httpMethod === "GET") {
+  if (event.httpMethod === HTTP_METHODS.get) {
     const doc = await DaysDocModel.findOne({ id: SINGLETON_ID })
       .lean<DaysDocRecord>()
       .exec();
@@ -77,7 +82,7 @@ export const handler: Handler = async (event) => {
     return json(200, { trackers: trackers.map(serializeTracker) });
   }
 
-  if (event.httpMethod === "POST") {
+  if (event.httpMethod === HTTP_METHODS.post) {
     try {
       const payload = parseJsonBody(event.body ?? null);
       const trackers = sanitizeTrackers(payload.trackers);
@@ -94,7 +99,7 @@ export const handler: Handler = async (event) => {
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Invalid payload";
+        error instanceof Error ? error.message : ERROR_TEXT.invalidPayload;
       return badRequest(message);
     }
   }
