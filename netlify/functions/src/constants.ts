@@ -1,3 +1,5 @@
+import type { BinaryToTextEncoding } from "crypto";
+
 export const SINGLETON_ID = "singleton";
 
 export const TRACKER_LABEL_FALLBACK = "Untitled Tracker";
@@ -28,7 +30,13 @@ export const COOKIE = {
   name: "activity_session",
 };
 
-export const HASH = {
+type HashConfig = {
+  algorithm: string;
+  hexEncoding: BinaryToTextEncoding;
+  tokenSeparator: string;
+};
+
+export const HASH: HashConfig = {
   algorithm: "sha256",
   hexEncoding: "hex",
   tokenSeparator: ".",
